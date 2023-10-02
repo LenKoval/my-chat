@@ -15,6 +15,7 @@ public class ClientHandler {
     private String username;
 
     private static int userCount = 0;
+    private static final int maxUsersCount = 10;
     // реализовать ограничение количества пользователей
 
     public String getUsername() {
@@ -26,7 +27,9 @@ public class ClientHandler {
         this.server = server;
         in = new DataInputStream(socket.getInputStream());
         out = new DataOutputStream(socket.getOutputStream());
-        username = "User" + userCount++;
+        if (userCount < maxUsersCount) {
+            username = "User" + userCount++;
+        }
         server.subscribe(this);
         new Thread(() -> {
             try {
@@ -38,6 +41,9 @@ public class ClientHandler {
                     if(message.startsWith("/")) {
                         if(message.equals("/exit")) {
                             break;
+                        } else if (message.equals("/w")) {
+                            String[] data = message.split("\\s", 3);
+                            server.broadcastMesForUser(this, data[1], data[2]);
                         }
                     }
                     server.broadcastMessage(message);

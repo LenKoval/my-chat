@@ -39,6 +39,15 @@ public class Server {
         }
     }
 
+    public void broadcastMesForUser(ClientHandler clientHandler, String userName, String message) {
+        for (ClientHandler client : clients) {
+            if (client.getUsername().equals(userName)) {
+                client.sendMessage("Сообщение от " + clientHandler.getUsername() + message);
+                break;
+            }
+        }
+    }
+
     public void unsubscribe(ClientHandler clientHandler) {
         clients.remove(clientHandler);
         broadcastMessage("Клиент: " + clientHandler.getUsername() + " вышел из чата");
