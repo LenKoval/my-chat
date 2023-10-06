@@ -43,7 +43,7 @@ public class ClientHandler {
                             break;
                         } else if (message.equals("/w")) {
                             String[] data = message.split("\\s", 3);
-                            server.broadcastMesForUser(this, data[1], data[2]);
+                            server.pointToPoint(this, data[1], data[2]);
                         }
                     }
                     server.broadcastMessage(message);
