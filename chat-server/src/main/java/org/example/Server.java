@@ -5,14 +5,21 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Server {
     private int port;
     private List<ClientHandler> clients;
+    private final AuthenticationProvider authenticationProvider;
 
-    public Server(int port) { //переделать на логирование
+    public AuthenticationProvider getAuthenticationProvider() {
+        return authenticationProvider;
+    }
+
+    public Server(int port, AuthenticationProvider authenticationProvider) { //переделать на логирование
         this.port = port;
         clients = new ArrayList<>();
+        this.authenticationProvider = authenticationProvider;
     }
 
     public void start() {
@@ -39,7 +46,7 @@ public class Server {
         }
     }
 
-    public void pointToPoint(ClientHandler clientHandler, String userName, String message) {
+    public synchronized void pointToPoint(ClientHandler clientHandler, String userName, String message) {
         for (ClientHandler client : clients) {
             if (client.getUsername().equals(userName)) {
                 client.sendMessage("Сообщение от " + clientHandler.getUsername() + message);
@@ -48,9 +55,21 @@ public class Server {
         }
     }
 
-    public void unsubscribe(ClientHandler clientHandler) {
+    public synchronized void unsubscribe(ClientHandler clientHandler) {
         clients.remove(clientHandler);
         broadcastMessage("Клиент: " + clientHandler.getUsername() + " вышел из чата");
+    }
+
+    public synchronized List<String> getUserList() {
+        /*var lis = new ArrayList<String>();
+        for (ClientHandler client : clients) {
+            lis.add(client.getUsername());
+        }
+        return lis;*/
+        return clients.stream()
+                //.map(ClientHandler::getUsername)
+                .map(client -> client.getUsername())
+                .collect(Collectors.toList());
     }
 }
 

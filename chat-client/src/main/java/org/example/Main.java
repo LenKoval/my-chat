@@ -27,6 +27,16 @@ public class Main extends JFrame implements Runnable {
         outTextArea.setEditable(false);
         cp.add(BorderLayout.SOUTH, southPanel);
 
+        this.network = network;
+        inTextSendButton.addActionListener(event -> {
+            String text = inTextField.getText();
+            try {
+                network.sendMessage(text);
+            } catch (IOException e) {
+                throw new RuntimeException(e); //надо залогировать || закрыть соединение
+            }
+        });
+
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(400, 500);
         setVisible(true);
@@ -35,7 +45,7 @@ public class Main extends JFrame implements Runnable {
         this.network.setCallback(new Callback() {
             @Override
             public void call(Object... args) {
-                outTextArea.append((String) args[0]);
+                outTextArea.setText((String) args[0]);
             }
         });
     }
