@@ -6,9 +6,11 @@ import java.util.Objects;
 
 public class InMemoryAuthenticationProvider implements AuthenticationProvider {
     private final List<User> users;
+    private final Admin admin;
     public InMemoryAuthenticationProvider() {
         //ConcurrentHashMap можно использовать
         this.users = new ArrayList<>();
+        this.admin = new Admin();
     }
 
     @Override
@@ -18,6 +20,11 @@ public class InMemoryAuthenticationProvider implements AuthenticationProvider {
                 return user.getUsername();
             }
         }
+
+        if (Objects.equals(login, admin.getLogin()) && Objects.equals(password, admin.getPassword())) {
+            return admin.getName();
+        }
+
         return null;
     }
 
@@ -30,5 +37,13 @@ public class InMemoryAuthenticationProvider implements AuthenticationProvider {
         }
         users.add(new User(login, password, username));
         return true;
+    }
+
+    @Override
+    public boolean isRole(String username) {
+        if (username.equals(admin.getName())) {
+            return true;
+        }
+        return false;
     }
 }

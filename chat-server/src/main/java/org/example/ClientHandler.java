@@ -63,6 +63,14 @@ public class ClientHandler {
                     String joinedUsers = String.join(", ", userList);
                     //userList.stream().collect(Collectors.joining(", "));
                     sendMessage(joinedUsers);
+                } else if (message.equals("/kick")) {
+                    String[] data = message.split("\\s", 3);
+                    if (server.getAuthenticationProvider().isRole(data[0])) {
+                        server.unsubscribe(this);
+                        server.broadcastMessage("Пользователь " + data[2] + " удален из чата.");
+                    } else {
+                        System.out.println(data[0] + " у вас нет прав для операции.");
+                    }
                 }
             } else {
                 server.broadcastMessage("Server: " + message);
