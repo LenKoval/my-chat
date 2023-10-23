@@ -1,12 +1,13 @@
 package org.example;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class User {
     private String login;
     private String password;
     private String username;
-    private static final Roles role = Roles.USER;
-    /*private final String adminLogin = "admin";
-    private final String adminPassword = "admin555";*/
+    private List<Roles> role;
 
     public String getLogin() {
         return login;
@@ -20,21 +21,14 @@ public class User {
         return username;
     }
 
-    public Roles getRole() {
+    public List<Roles> getRole() {
         return role;
     }
 
-    /*public String getAdminLogin() {
-        return adminLogin;
-    }
-
-    public String getAdminPassword() {
-        return adminPassword;
-    }*/
-
-    public User(String login, String password, String username) {
+    public User(String login, String password, String username, List<Roles> role) {
         this.login = login;
         this.password = password;
         this.username = username;
+        this.role = new ArrayList<>();
     }
 }

@@ -1,16 +1,20 @@
 package org.example;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 public class InMemoryAuthenticationProvider implements AuthenticationProvider {
     private final List<User> users;
-    private final Admin admin;
+    private static final String adminLogin = "admin";
+    private static final String adminPassword = "admin555";
+    private static final String adminUserName = "administrator";
+
     public InMemoryAuthenticationProvider() {
         //ConcurrentHashMap можно использовать
         this.users = new ArrayList<>();
-        this.admin = new Admin();
+        users.add(new User(adminLogin, adminPassword, adminUserName, Arrays.asList(Roles.ADMIN, Roles.USER)));
     }
 
     @Override
@@ -20,11 +24,6 @@ public class InMemoryAuthenticationProvider implements AuthenticationProvider {
                 return user.getUsername();
             }
         }
-
-        if (Objects.equals(login, admin.getLogin()) && Objects.equals(password, admin.getPassword())) {
-            return admin.getName();
-        }
-
         return null;
     }
 
@@ -35,14 +34,16 @@ public class InMemoryAuthenticationProvider implements AuthenticationProvider {
                 return false;
             }
         }
-        users.add(new User(login, password, username));
+        users.add(new User(login, password, username, Arrays.asList(Roles.USER)));
         return true;
     }
 
     @Override
-    public boolean isRole(String username) {
-        if (username.equals(admin.getName())) {
-            return true;
+    public synchronized boolean isAdmin(ClientHandler clientHandler) {
+        for (User user : users) {
+            if (Objects.equals(user.getUsername(), clientHandler.getUsername()) && user.getRole().equals(Roles.ADMIN)) {
+                return true;
+            }
         }
         return false;
     }

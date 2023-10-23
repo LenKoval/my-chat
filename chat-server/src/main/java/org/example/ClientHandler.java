@@ -9,17 +9,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ClientHandler {
-    private Socket socket;
-
-    private Server server;
-    private DataInputStream in;
-    private DataOutputStream out;
-
+    private Socket socket; // подключение
+    private Server server; // сервер с клиентами
+    private DataInputStream in; // входящее сооб
+    private DataOutputStream out; // исх сооб
     private String username;
-
     private static int userCount = 0;
     private static final int maxUsersCount = 10;
-    // реализовать ограничение количества пользователей
 
     public String getUsername() {
         return username;
@@ -37,7 +33,6 @@ public class ClientHandler {
             try {
                 authenticateUser(server);
                 communicateWithUser(server);
-
             } catch (IOException e) {
                 throw new RuntimeException(e);
             } finally {
@@ -48,28 +43,29 @@ public class ClientHandler {
 
     private void communicateWithUser(Server server) throws IOException {
         while(true) {
-            // /exit -> disconnect()
-            // /w user message -> user
-
             String message = in.readUTF();
+            String[] args = message.split(" ");
             if (message.startsWith("/")) {
                 if (message.equals("/exit")) {
                     break;
-                } else if (message.equals("/w")) {
-                    String[] data = message.split("\\s", 3);
-                    server.pointToPoint(this, data[1], data[2]);
-                } else if (message.equals("/list")) {
-                    List<String> userList = server.getUserList();
+                }
+                if (message.equals("/w")) {
+                    String userName = args[1];
+                    String mes = args[2];
+                    server.pointToPoint(this, userName, mes);
+                }
+                if (message.equals("/list")) {
+                    List<String> userList = server.getUsernameList();
                     String joinedUsers = String.join(", ", userList);
                     //userList.stream().collect(Collectors.joining(", "));
                     sendMessage(joinedUsers);
-                } else if (message.equals("/kick")) {
-                    String[] data = message.split("\\s", 3);
-                    if (server.getAuthenticationProvider().isRole(data[0])) {
-                        server.unsubscribe(this);
-                        server.broadcastMessage("Пользователь " + data[2] + " удален из чата.");
+                }
+                if (message.equals("/kick")) {
+                    String[] data1 = message.split("\\s", 2);
+                    if (server.getAuthenticationProvider().isAdmin(this)) {
+                        server.kickUser(data1[1]);
                     } else {
-                        System.out.println(data[0] + " у вас нет прав для операции.");
+                        sendMessage("У вас нет прав для операции.");
                     }
                 }
             } else {
@@ -82,8 +78,6 @@ public class ClientHandler {
         boolean isAuthenticated = false;
         while(!isAuthenticated) {
             String message = in.readUTF();
-            //auth login password
-            //sing login nick password
             String[] args = message.split(" ");
             String command = args[0];
             switch (command) {

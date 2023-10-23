@@ -1,7 +1,5 @@
 package org.example;
 
-import org.example.Callback;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -9,10 +7,8 @@ import java.net.Socket;
 
 public class Network implements AutoCloseable {
     private Socket socket;
-
     private DataInputStream in;
     private DataOutputStream out;
-
     private Callback callback;
 
     public void setCallback(Callback callback) {
