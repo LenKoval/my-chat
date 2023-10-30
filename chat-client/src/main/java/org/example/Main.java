@@ -43,8 +43,12 @@ public class Main extends JFrame implements Runnable {
         setVisible(true);
         inTextField.requestFocus();
         (new Thread(this)).start();
-        this.network.setCallback(args -> outTextArea
-                .setText(args[0].toString()));
+        this.network.setCallback(new Callback() {
+            @Override
+            public void call(Object... args) {
+                outTextArea.append((String) args[0]);
+            }
+        });
     }
 
     public static void main(String[] args) {

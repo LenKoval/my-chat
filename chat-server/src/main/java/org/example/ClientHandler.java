@@ -36,7 +36,7 @@ public class ClientHandler {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             } finally {
-                disconnect();
+                disconnect(this);
             }
         }).start();
     }
@@ -44,26 +44,21 @@ public class ClientHandler {
     private void communicateWithUser(Server server) throws IOException {
         while(true) {
             String message = in.readUTF();
-            String[] args = message.split(" ");
             if (message.startsWith("/")) {
                 if (message.equals("/exit")) {
                     break;
-                }
-                if (message.equals("/w")) {
-                    String userName = args[1];
-                    String mes = args[2];
-                    server.pointToPoint(this, userName, mes);
-                }
-                if (message.equals("/list")) {
+                } else if (message.startsWith("/w")) {
+                    server.pointToPoint(this, message);
+                } else if (message.equals("/list")) {
                     List<String> userList = server.getUsernameList();
                     String joinedUsers = String.join(", ", userList);
                     //userList.stream().collect(Collectors.joining(", "));
                     sendMessage(joinedUsers);
-                }
-                if (message.equals("/kick")) {
-                    String[] data1 = message.split("\\s", 2);
-                    if (server.getAuthenticationProvider().isAdmin(this)) {
-                        server.kickUser(data1[1]);
+                } else if (message.startsWith("/kick")) {
+                    sendMessage("Введите логин и пароль.");
+                    String info = in.readUTF();
+                    if (server.getAuthenticationProvider().isAdmin(info)) {
+                        server.kickUser(message);
                     } else {
                         sendMessage("У вас нет прав для операции.");
                     }
@@ -117,8 +112,8 @@ public class ClientHandler {
         }
     }
 
-    public void disconnect() {
-        server.unsubscribe(this);
+    public void disconnect(ClientHandler clientHandler) {
+        server.unsubscribe(clientHandler);
         if(socket != null) {
             try {
                 socket.close();
@@ -144,10 +139,10 @@ public class ClientHandler {
 
     public void sendMessage(String message) {
         try {
-            out.writeUTF(message);
+            out.writeUTF(message + "\r\n");
         } catch (IOException e) {
             e.printStackTrace();
-            disconnect();
+            disconnect(this);
         }
     }
 }

@@ -45,20 +45,20 @@ public class Server {
         }
     }
 
-    public synchronized void pointToPoint(ClientHandler from, String userNameTo, String message) {
+    public synchronized void pointToPoint(ClientHandler from, String message) {
+        String[] data = message.split(" ", 3);
         for (ClientHandler client : clients) {
-            if (client.getUsername().equals(userNameTo)) {
-                client.sendMessage("сообщение от " + from.getUsername() + message);
-                from.sendMessage("сообщение " + message + " доставлено " + userNameTo);
-                break;
+            if (client.getUsername().equals(data[1])) {
+                client.sendMessage("Сообщение от " + from.getUsername() + " " + data[2]);
             }
         }
     }
 
-    public synchronized void kickUser(String username) {
+    public synchronized void kickUser(String message) {
+        String[] data = message.split(" ", 2);
         for (ClientHandler client : clients) {
-            if (client.getUsername().equals(username)) {
-                client.disconnect();
+            if (client.getUsername().equals(data[1])) {
+                client.disconnect(client);
             }
         }
     }
@@ -69,15 +69,7 @@ public class Server {
     }
 
     public synchronized List<String> getUsernameList() {
-        /*var lis = new ArrayList<String>();
-        for (ClientHandler client : clients) {
-            lis.add(client.getUsername());
-        }
-        return lis;*/
-        return clients.stream()
-                .map(ClientHandler::getUsername)
-                //.map(client -> client.getUsername())
-                .collect(Collectors.toList());
+        return clients.stream().map(ClientHandler::getUsername).collect(Collectors.toList());
     }
 }
 
