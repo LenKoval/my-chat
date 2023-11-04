@@ -56,10 +56,15 @@ public class Server {
 
     public synchronized void kickUser(String message) {
         String[] data = message.split(" ", 2);
+        ClientHandler kickedClient = null;
         for (ClientHandler client : clients) {
             if (client.getUsername().equals(data[1])) {
-                client.disconnect(client);
+                kickedClient = client;
             }
+        }
+        if (kickedClient != null) {
+            kickedClient.sendMessage("Вы удалены из чата.");
+            kickedClient.disconnect();
         }
     }
 

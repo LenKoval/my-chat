@@ -36,7 +36,7 @@ public class ClientHandler {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             } finally {
-                disconnect(this);
+                disconnect();
             }
         }).start();
     }
@@ -112,8 +112,8 @@ public class ClientHandler {
         }
     }
 
-    public void disconnect(ClientHandler clientHandler) {
-        server.unsubscribe(clientHandler);
+    public void disconnect() {
+        server.unsubscribe(this);
         if(socket != null) {
             try {
                 socket.close();
@@ -142,7 +142,7 @@ public class ClientHandler {
             out.writeUTF(message + "\r\n");
         } catch (IOException e) {
             e.printStackTrace();
-            disconnect(this);
+            disconnect();
         }
     }
 }
