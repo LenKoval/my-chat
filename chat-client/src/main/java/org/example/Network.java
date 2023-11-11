@@ -60,8 +60,12 @@ public class Network implements AutoCloseable {
         }
     }
 
-    public void sendMessage(String msg) throws IOException {
-        out.writeUTF(msg);
+    public void sendMessage(String msg) {
+        try {
+            out.writeUTF(msg);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
 

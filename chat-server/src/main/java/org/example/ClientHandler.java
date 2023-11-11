@@ -4,11 +4,11 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Collections;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class ClientHandler {
+public class ClientHandler implements AutoCloseable {
     private Socket socket; // подключение
     private Server server; // сервер с клиентами
     private DataInputStream in; // входящее сооб
@@ -18,6 +18,11 @@ public class ClientHandler {
     private static final int maxUsersCount = 10;
 
     public String getUsername() {
+        return username;
+    }
+
+    public String setUsername(String username) {
+        this.username = username;
         return username;
     }
 
@@ -31,6 +36,7 @@ public class ClientHandler {
         }
         new Thread(() -> {
             try {
+                socket.setSoTimeout(50000);
                 authenticateUser(server);
                 communicateWithUser(server);
             } catch (IOException e) {
@@ -42,7 +48,7 @@ public class ClientHandler {
     }
 
     private void communicateWithUser(Server server) throws IOException {
-        while(true) {
+        while (true) {
             String message = in.readUTF();
             if (message.startsWith("/")) {
                 if (message.equals("/exit")) {
@@ -52,26 +58,45 @@ public class ClientHandler {
                 } else if (message.equals("/list")) {
                     List<String> userList = server.getUsernameList();
                     String joinedUsers = String.join(", ", userList);
-                    //userList.stream().collect(Collectors.joining(", "));
                     sendMessage(joinedUsers);
                 } else if (message.startsWith("/kick")) {
                     sendMessage("Введите логин и пароль.");
                     String info = in.readUTF();
-                    if (server.getAuthenticationProvider().isAdmin(info)) {
+                    if (server.getAuthenticationProvider().checkAccess(info)) {
                         server.kickUser(message);
+                    } else {
+                        sendMessage("У вас нет прав для операции.");
+                    }
+                } else if (message.startsWith("/changeNick")) {
+                    if (!server.changeNick(server.getAuthenticationProvider().changeUsername(message))) {
+                        sendMessage("Вы ввели некорректные данные или такой ник уже занят. Попоробуйте еще раз.");
+                    }
+                } else if (message.startsWith("/ban")) {
+                    sendMessage("Введите логин и пароль.");
+                    String info = in.readUTF();
+                    if (server.getAuthenticationProvider().checkAccess(info)) {
+                        server.banClient(server.getAuthenticationProvider().banUser(message));
+                    } else {
+                        sendMessage("У вас нет прав для операции.");
+                    }
+                } else if (message.startsWith("/shutdown")) {
+                    sendMessage("Введите логин и пароль");
+                    String info = in.readUTF();
+                    if (server.getAuthenticationProvider().checkAccess(info)) {
+                        disconnect();
                     } else {
                         sendMessage("У вас нет прав для операции.");
                     }
                 }
             } else {
-                server.broadcastMessage("Server: " + message);
+                server.broadcastMessage(username + ": " + message);
             }
         }
     }
 
     private void authenticateUser(Server server) throws IOException {
         boolean isAuthenticated = false;
-        while(!isAuthenticated) {
+        while (!isAuthenticated) {
             String message = in.readUTF();
             String[] args = message.split(" ");
             String command = args[0];
@@ -85,6 +110,7 @@ public class ClientHandler {
                     } else {
                         this.username = username;
                         sendMessage(username + " , добро пожаловать в чат!");
+                        System.out.println(username + " вошел в чат.");
                         server.subscribe(this);
                         isAuthenticated = true;
                     }
@@ -100,6 +126,7 @@ public class ClientHandler {
                     } else {
                         this.username = nick;
                         sendMessage(nick + " , добро пожаловать в чат!");
+                        System.out.println(nick + " вошел в чат.");
                         server.subscribe(this);
                         isAuthenticated = true;
                     }
@@ -112,23 +139,35 @@ public class ClientHandler {
         }
     }
 
+    public void sendMessage(String message) {
+        String dateTime = DateTimeFormatter.ofPattern("HH:mm:ss")
+                .format(LocalDateTime.now());
+        try {
+            out.writeUTF(dateTime + " " + message + "\r\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+            disconnect();
+        }
+    }
+
     public void disconnect() {
         server.unsubscribe(this);
-        if(socket != null) {
-            try {
+        if (socket != null) {
+            try{
                 socket.close();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-        if (in != null) {
+
+        if(in !=null) {
             try {
                 in.close();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-        if (out != null) {
+        if(out !=null) {
             try {
                 out.close();
             } catch (IOException e) {
@@ -137,12 +176,7 @@ public class ClientHandler {
         }
     }
 
-    public void sendMessage(String message) {
-        try {
-            out.writeUTF(message + "\r\n");
-        } catch (IOException e) {
-            e.printStackTrace();
-            disconnect();
-        }
+    @Override
+    public void close() {
     }
 }

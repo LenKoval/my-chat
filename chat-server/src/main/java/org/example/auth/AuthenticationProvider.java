@@ -1,7 +1,9 @@
-package org.example;
+package org.example.auth;
 
 public interface AuthenticationProvider {
     String getUsernameByLoginAndPassword(String login, String password);
     boolean register(String login, String password, String username);
-    boolean isAdmin(String str);
+    boolean checkAccess(String str);
+    String[] changeUsername(String str);
+    String banUser(String str);
 }

@@ -1,13 +1,11 @@
 package org.example;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class User {
     private String login;
     private String password;
     private String username;
-    private List<Roles> role;
+    private String role;
+    private Boolean isBanned;
 
     public String getLogin() {
         return login;
@@ -16,19 +14,31 @@ public class User {
     public String getPassword() {
         return password;
     }
-
     public String getUsername() {
         return username;
     }
 
-    public List<Roles> getRole() {
+    public String getRole() {
         return role;
     }
 
-    public User(String login, String password, String username, List<Roles> role) {
+    public Boolean getBanned() {
+        return isBanned;
+    }
+
+    public void setBanned(Boolean banned) {
+        isBanned = banned;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public User(String login, String password, String username, String  role, boolean isBanned) {
         this.login = login;
         this.password = password;
         this.username = username;
-        this.role = new ArrayList<>();
+        this.role = role;
+        this.isBanned = isBanned;
     }
 }
