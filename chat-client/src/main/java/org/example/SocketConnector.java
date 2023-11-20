@@ -1,19 +1,19 @@
 package org.example;
 
-import org.example.Callback;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-public class Network implements AutoCloseable {
+public class SocketConnector implements AutoCloseable {
     private Socket socket;
-
     private DataInputStream in;
     private DataOutputStream out;
-
     private Callback callback;
+    private static final Logger logger = LogManager.getLogger(SocketConnector.class.getName());
 
     public void setCallback(Callback callback) {
         this.callback = callback;
@@ -25,7 +25,7 @@ public class Network implements AutoCloseable {
         out = new DataOutputStream(socket.getOutputStream());
         new Thread(() -> {
             try {
-                while(true) {
+                while (true) {
                     String message = in.readUTF();
                     if (callback != null) {
                         callback.call(message);
@@ -39,11 +39,11 @@ public class Network implements AutoCloseable {
         }).start();
     }
 
-    @Override
     public void close()  {
         if(socket != null) {
             try {
                 socket.close();
+                logger.info("Сокет закрыт");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -51,6 +51,7 @@ public class Network implements AutoCloseable {
         if (in != null) {
             try {
                 in.close();
+                logger.info("Поток чтения закрыт");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -58,14 +59,20 @@ public class Network implements AutoCloseable {
         if (out != null) {
             try {
                 out.close();
+                logger.info("Поток записи закрыт");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
     }
 
-    public void sendMessage(String msg) throws IOException {
-        out.writeUTF(msg);
+    public void sendMessage(String msg) {
+        try {
+            out.writeUTF(msg);
+            logger.info("Поток записи открыт");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
 
