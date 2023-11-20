@@ -1,9 +1,12 @@
 package org.example.auth;
 
+import java.util.List;
+
 public interface AuthenticationProvider {
     String getUsernameByLoginAndPassword(String login, String password);
     boolean register(String login, String password, String username);
     boolean checkAccess(String str);
     String[] changeUsername(String str);
-    String banUser(String str);
+    void changeBanUser(String str);
+    List<String> getBannedUsers();
 }

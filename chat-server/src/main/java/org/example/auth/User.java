@@ -1,4 +1,4 @@
-package org.example;
+package org.example.auth;
 
 public class User {
     private String login;

@@ -1,20 +1,23 @@
 package org.example.auth;
 
-import org.example.User;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class InMemoryAuthenticationProvider implements AuthenticationProvider {
+public class InDBAuthenticationProvider implements AuthenticationProvider {
     private final List<User> users;
-    private BDConnector bdConnector;
+    private DBHandler dbConnector;
+    private static final Logger logger = LogManager.getLogger(InDBAuthenticationProvider.class.getName());
 
-    public InMemoryAuthenticationProvider() {
+    public InDBAuthenticationProvider() {
         //ConcurrentHashMap можно использовать
         this.users = new ArrayList<>();
-        this.bdConnector = new BDConnector();
-        users.addAll(bdConnector.selectUsers());
+        this.dbConnector = new DBHandler();
+        users.addAll(dbConnector.selectUsers());
+        logger.info("Данные пользователей из базы добавлены в список.");
     }
 
     @Override
@@ -23,6 +26,7 @@ public class InMemoryAuthenticationProvider implements AuthenticationProvider {
             if (Objects.equals(user.getPassword(), password)
                     && Objects.equals(user.getLogin(), login)
                     && Objects.equals(user.getBanned(), false)) {
+                logger.info("Пользователь прошел аутоитентификацию.");
                 return user.getUsername();
             }
         }
@@ -37,7 +41,8 @@ public class InMemoryAuthenticationProvider implements AuthenticationProvider {
             }
         }
         users.add(new User(login, password, username, "user", false));
-        bdConnector.insertUser(login, password, username);
+        logger.info("Новый пользователь зарегестрирован.");
+        dbConnector.insertUser(login, password, username);
         return true;
     }
 
@@ -48,6 +53,7 @@ public class InMemoryAuthenticationProvider implements AuthenticationProvider {
             if (Objects.equals(user.getLogin(), data[0])
                     && Objects.equals(user.getPassword(), data[1])
                     && Objects.equals(user.getRole(), "admin")) {
+                logger.info("Администратор прошел аутоитентификацию.");
                 return true;
             }
         }
@@ -61,23 +67,34 @@ public class InMemoryAuthenticationProvider implements AuthenticationProvider {
                 return null;
             } else {
                 if(Objects.equals(user.getUsername(), data[1])) {
-                    user.setUsername(data[2]);
-                    bdConnector.updateUser(data[2], data[3]);
+                    user.setUsername(data[3]);
+                    logger.info("Username изменен в списке.");
+                    dbConnector.updateUser(data[2], data[3]);
                 }
             }
         }
         return data;
     }
     @Override
-    public synchronized String banUser(String message) {
-        String[] data = message.split(" ", 2);
+    public synchronized void changeBanUser(String message) {
+        String[] data = message.split(" ", 3);
+        Boolean changeBan = Boolean.parseBoolean(data[2]);
         for (User user : users) {
-            if (Objects.equals(user.getUsername(), data[1])) {
-                user.setBanned(true);
-                bdConnector.updateBan(data[1]);
-                return user.getUsername();
+            if (Objects.equals(user.getUsername(), data[1]) && !Objects.equals(user.getBanned(), changeBan)) {
+                user.setBanned(changeBan);
+                logger.info("Изменен статус ban в списке у пользователя " + user.getUsername());
+                dbConnector.updateBan(data[1], changeBan);
             }
         }
-        return null;
+    }
+    @Override
+    public synchronized List<String> getBannedUsers() {
+        List<String> bannedUsers = new ArrayList<>();
+        for (User user : users) {
+            if (user.getBanned() == (true)) {
+                bannedUsers.add(user.getUsername());
+            }
+        }
+        return bannedUsers;
     }
 }

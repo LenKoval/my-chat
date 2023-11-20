@@ -1,9 +1,10 @@
 package org.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
-import java.util.Scanner;
 
 
 public class ClientView extends JFrame implements Runnable {
@@ -11,10 +12,10 @@ public class ClientView extends JFrame implements Runnable {
     protected JPanel southPanel;
     protected JTextField inTextField;
     protected JButton inTextSendButton;
-    protected boolean isOn;
-    Network network;
+    private SocketConnector socketConnector;
+    private static final Logger logger = LogManager.getLogger(ClientView.class.getName());
 
-    public ClientView(String title, Network network) throws HeadlessException {
+    public ClientView(String title, SocketConnector socketConnector) throws HeadlessException {
         super(title);
         southPanel = new JPanel();
         southPanel.setLayout(new GridLayout(2, 1, 10, 10));
@@ -24,14 +25,16 @@ public class ClientView extends JFrame implements Runnable {
         Container cp = getContentPane();
         cp.setLayout(new BorderLayout());
         cp.add(BorderLayout.CENTER, outTextArea = new JTextArea());
+        outTextArea.setLineWrap(true);
+        outTextArea.setWrapStyleWord(true);
         outTextArea.setEditable(false);
         cp.add(BorderLayout.SOUTH, southPanel);
 
-        this.network = network;
+        this.socketConnector = socketConnector;
 
         inTextSendButton.addActionListener(event -> {
             String text = inTextField.getText();
-            network.sendMessage(text);
+            socketConnector.sendMessage(text);
         });
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -39,26 +42,12 @@ public class ClientView extends JFrame implements Runnable {
         setVisible(true);
         inTextField.requestFocus();
         (new Thread(this)).start();
-        this.network.setCallback(new Callback() {
+        this.socketConnector.setCallback(new Callback() {
             @Override
             public void call(Object... args) {
                 outTextArea.append((String) args[0]);
             }
         });
-    }
-
-    public static void main(String[] args) {
-        try(Network network = new Network()) {
-            network.connect(8080);
-            new ClientView("chat", network);
-            Scanner scanner = new Scanner(System.in);
-            while (true) {
-                String msg = scanner.nextLine();
-                network.sendMessage(msg);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override
